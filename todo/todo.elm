@@ -18,49 +18,66 @@ main =
 
 
 type alias Model =
-    { inputting : String, tasks : List String }
+    { title : String, description : String, todoList : TodoList }
+
+
+type alias Todo =
+    { title : String
+    , description : String
+    , done : Bool
+    }
+
+
+type alias TodoList =
+    List Todo
 
 
 model : Model
 model =
-    Model "" []
+    Model "" "" []
 
 
 type Msg
-    = Input String
-    | Save
+    = Title String
+    | Description String
+    | Create
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Input new ->
-            { model | inputting = new }
+        Title title ->
+            { model | title = title }
 
-        Save ->
-            { model | inputting = "", tasks = (L.append model.tasks [ model.inputting ]) }
+        Description description ->
+            { model | description = description }
+
+        Create ->
+            { model | todoList = (L.append model.todoList [ Todo model.title model.description False ]) }
 
 
 view : Model -> Html Msg
 view model =
     div [ id "container", style Styles.container ]
-        [ input [ onInput Input, value model.inputting ] []
-        , div [] [ text model.inputting ]
-        , button [ onClick Save ] [ text "save" ]
-        , div [] (taskList model.tasks)
+        [ div []
+            [ input [ placeholder "Title", onInput Title ] []
+            , input [ placeholder "Description", onInput Description ] []
+            , button [ onClick Create ] [ text "Create ToDo" ]
+            ]
+        , div [] (todoList model.todoList)
         ]
 
 
-taskList : List String -> List (Html Msg)
-taskList x =
-    case L.length x of
+todoList : TodoList -> List (Html Msg)
+todoList xs =
+    case L.length xs of
         0 ->
             []
 
         _ ->
             (div []
-                [ p [] [ text (M.withDefault "" (L.head x)) ]
-                , input [ type_ "checkbox" ] []
+                [ (M.withDefault (Todo "" "" False) (L.head xs)) |> \todo -> text todo.title
+                , (M.withDefault (Todo "" "" False) (L.head xs)) |> \todo -> text todo.description
                 ]
             )
-                :: (taskList (M.withDefault [] (L.tail x)))
+                :: (todoList (M.withDefault [] (L.tail xs)))
